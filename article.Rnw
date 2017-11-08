@@ -1,0 +1,66 @@
+\documentclass{article}
+\usepackage{natbib}
+
+
+\begin{document}
+
+\title{Dracula Wordcloud}
+\author{Andrew Mayo}
+\maketitle
+
+\begin{abstract}
+This document will give instructions on how to create a wordcloud from the classic novel Dracula.  We will be using the R program along with packages such as tidytext, dplyr, wordcloud.
+
+\end{abstract}
+
+\textit{Dracula}is a novel written by Bram Stoker published in 1897\footnote{This is an example of a footnote}.  This novel is the first introduction of Count Dracula and created many conventions of vampires written about in further literature.  Below I will show how to create create a wordcloud based on the most common used words throughout the novel
+
+\section{The Gutenberg Package}
+There is a package in R which gives us access to almost all books located within the public domain.  In order to find Dracula we will use the string detect function from the stringr package.
+
+<<>>=
+library(stringr)
+library(gutenbergr)
+
+gutenberg_works(str_detect(title, "Dracula"))
+@
+
+As we can see from the output, Dracula is labeled with an ID number of 345.  We will now download the book and place it in the variable Dracula.
+<<>>=
+Dracula <- gutenberg_download(345)
+@
+
+Now that we have Dracula downloaded we have to pull out the text and remove stop words\footnote{Stopwords are unimportant words such as the and or}.  In order to do this we will use the tidytext package and dplyr package.
+<<warning=FALSE,message=FALSE>>=
+library(dplyr)
+library(tidytext)
+words_df <- Dracula%>%
+              unnest_tokens(words,text)
+
+words_df <- words_df%>%
+              filter(!(words %in% stop_words$word))
+@
+
+Once this is completed we have every single individual word as its own row within a dataframe.  Now that all of the words are seperated we want to add up how many times each word appears throughout the novel. In order to do this we will use the dplyr package and group by each word.
+<<>>=
+word_freq <- words_df%>%
+              group_by(words)%>%
+              summarize(count = n())
+@
+
+Now that we have all of the data that we need let's create the wordcloud.
+
+\section{The Wordcloud}
+In order to generate the wordcloud we need the R package wordcloud.  In the function we put in the words we want, the count of each word, and the minimum frequency which must be present in order to view the word.
+<<>>=
+library(wordcloud)
+wordcloud(word_freq$words, word_freq$count, min.freq = 60)
+@
+
+Looks great! Now you can try it with a different book to see the main aspects of the novel.
+
+\bibliographystyle{apa}
+\bibliography{article}
+\nocite{*}
+
+\end{document}
